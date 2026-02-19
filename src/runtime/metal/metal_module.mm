@@ -198,12 +198,13 @@ class MetalWrappedFunc {
       metal::MetalThreadEntry* t = metal::MetalThreadEntry::ThreadLocal();
       int device_id = t->device.device_id;
       // obtain the stream
-      auto stream =
+      auto base_stream =
           metal::MetalWorkspace::Global()->CastStreamOrGetDefault(t->stream[device_id], device_id);
 
-      if (!(stream = dynamic_cast<metal::MetalRawStream*>(metal::MetalWorkspace::Global()->CastStreamOrGetDefault(t->stream[device_id], device_id)))) {
-        // stream is not MetalRawStream
-        stream->SetError("Internal error: stream not from torch.");
+      auto stream = dynamic_cast<metal::MetalRawStream*>(base_stream);
+      if (!stream) {
+        // stream is not MetalRawStream, report error on the base stream
+        base_stream->SetError("Internal error: stream not from torch.");
         return;
       }
 
